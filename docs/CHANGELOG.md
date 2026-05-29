@@ -17,6 +17,9 @@ aliases:
 * FEATURE: [vmoperator](https://docs.victoriametrics.com/operator/): added `VM_COMMON_LABELS` and `VM_COMMON_ANNOTATIONS` environment variables to apply common labels/annotations to all Kubernetes resources managed by the operator. These cannot override labels/annotations already set by the operator or via `spec.managedMetadata`. This also ensures HTTPRoutes and PVCs include ManagedMetadata labels and annotations
 * FEATURE: [vmoperator](https://docs.victoriametrics.com/operator/): support enableServiceLinks property in all CRs. See [#2194](https://github.com/VictoriaMetrics/operator/pull/2194).
 
+* FEATURE: [vmsingle](https://docs.victoriametrics.com/operator/resources/vmsingle/): added `spec.downsampling` for structured [downsampling](https://docs.victoriametrics.com/victoriametrics/single-server-victoriametrics/#downsampling) configuration and `spec.retentionFilters` for structured [retention filters](https://docs.victoriametrics.com/victoriametrics/single-server-victoriametrics/#retention-filters) configuration. Both require an enterprise license.
+* FEATURE: [vmcluster](https://docs.victoriametrics.com/operator/resources/vmcluster/): added `spec.downsampling` for structured [downsampling](https://docs.victoriametrics.com/victoriametrics/cluster-victoriametrics/#downsampling) configuration (applied to both vmselect and vmstorage) and `spec.vmstorage.retentionFilters` for structured [retention filters](https://docs.victoriametrics.com/victoriametrics/cluster-victoriametrics/#retention-filters) configuration. Both require an enterprise license.
+
 * BUGFIX: [vmoperator](https://docs.victoriametrics.com/operator/): update status currentRevision and currentReplicas for StatefulSet with OnDelete update strategy. See [#1242](https://github.com/VictoriaMetrics/operator/issues/1242).
 
 ## [v0.70.1](https://github.com/VictoriaMetrics/operator/releases/tag/v0.70.0)

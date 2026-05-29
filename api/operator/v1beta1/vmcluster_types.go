@@ -56,6 +56,11 @@ type VMClusterSpec struct {
 	// +optional
 	License *License `json:"license,omitempty"`
 
+	// Downsampling defines downsampling rules applied to vmselect and vmstorage components.
+	// Requires enterprise license. See https://docs.victoriametrics.com/victoriametrics/cluster-victoriametrics/#downsampling
+	// +optional
+	Downsampling *DownsamplingConfig `json:"downsampling,omitempty"`
+
 	// +optional
 	VMSelect *VMSelect `json:"vmselect,omitempty"`
 	// +optional
@@ -462,6 +467,10 @@ type VMStorage struct {
 	// VMBackup configuration for backup
 	// +optional
 	VMBackup *VMBackup `json:"vmBackup,omitempty"`
+	// RetentionFilters defines per-series retention filters for vmstorage.
+	// Requires enterprise license. See https://docs.victoriametrics.com/victoriametrics/cluster-victoriametrics/#retention-filters
+	// +optional
+	RetentionFilters []RetentionFilter `json:"retentionFilters,omitempty"`
 	// ServiceSpec that will be create additional service for vmstorage
 	// +optional
 	ServiceSpec *AdditionalServiceSpec `json:"serviceSpec,omitempty"`
@@ -679,6 +688,9 @@ func (cr *VMCluster) Validate() error {
 			}
 		}
 	}
+	if err := cr.Spec.Downsampling.validate(cr.Spec.License); err != nil {
+		return err
+	}
 	if cr.Spec.VMStorage != nil {
 		vms := cr.Spec.VMStorage
 		name := cr.PrefixedName(ClusterComponentSelect)
@@ -687,6 +699,22 @@ func (cr *VMCluster) Validate() error {
 		}
 		if cr.Spec.VMStorage.VMBackup != nil {
 			if err := cr.Spec.VMStorage.VMBackup.validate(cr.Spec.License); err != nil {
+				return err
+			}
+		}
+		if len(vms.RetentionFilters) > 0 {
+			if !cr.Spec.License.IsProvided() {
+				return fmt.Errorf("it is required to provide license key for retentionFilters. See [here](https://docs.victoriametrics.com/victoriametrics/enterprise/)")
+			}
+			if err := cr.Spec.License.validate(); err != nil {
+				return err
+			}
+			for i := range vms.RetentionFilters {
+				if err := vms.RetentionFilters[i].validate(); err != nil {
+					return fmt.Errorf("vmstorage.retentionFilters[%d]: %w", i, err)
+				}
+			}
+			if err := validateRetentionFiltersAgainstPeriod(vms.RetentionFilters, cr.Spec.RetentionPeriod, "vmstorage.retentionFilters"); err != nil {
 				return err
 			}
 		}

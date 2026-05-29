@@ -77,6 +77,14 @@ type VMSingleSpec struct {
 	ServiceScrapeSpec *VMServiceScrapeSpec `json:"serviceScrapeSpec,omitempty"`
 	// StreamAggrConfig defines stream aggregation configuration for VMSingle
 	StreamAggrConfig *StreamAggrConfig `json:"streamAggrConfig,omitempty"`
+	// Downsampling defines downsampling rules for VMSingle.
+	// Requires enterprise license. See https://docs.victoriametrics.com/victoriametrics/single-server-victoriametrics/#downsampling
+	// +optional
+	Downsampling *DownsamplingConfig `json:"downsampling,omitempty"`
+	// RetentionFilters defines per-series retention filters for VMSingle.
+	// Requires enterprise license. See https://docs.victoriametrics.com/victoriametrics/single-server-victoriametrics/#retention-filters
+	// +optional
+	RetentionFilters []RetentionFilter `json:"retentionFilters,omitempty"`
 	// APIServerConfig allows specifying a host and auth methods to access apiserver.
 	// If left empty, VMSingle is assumed to run inside of the cluster
 	// and will discover API servers automatically and use the pod's CA certificate
@@ -389,6 +397,27 @@ func (cr *VMSingle) Validate() error {
 
 	if cr.Spec.VMBackup != nil {
 		if err := cr.Spec.VMBackup.validate(cr.Spec.License); err != nil {
+			return err
+		}
+	}
+	if cr.Spec.Downsampling != nil {
+		if err := cr.Spec.Downsampling.validate(cr.Spec.License); err != nil {
+			return err
+		}
+	}
+	if len(cr.Spec.RetentionFilters) > 0 {
+		if !cr.Spec.License.IsProvided() {
+			return fmt.Errorf("it is required to provide license key for retentionFilters. See [here](https://docs.victoriametrics.com/victoriametrics/enterprise/)")
+		}
+		if err := cr.Spec.License.validate(); err != nil {
+			return err
+		}
+		for i := range cr.Spec.RetentionFilters {
+			if err := cr.Spec.RetentionFilters[i].validate(); err != nil {
+				return fmt.Errorf("retentionFilters[%d]: %w", i, err)
+			}
+		}
+		if err := validateRetentionFiltersAgainstPeriod(cr.Spec.RetentionFilters, cr.Spec.RetentionPeriod, "retentionFilters"); err != nil {
 			return err
 		}
 	}
