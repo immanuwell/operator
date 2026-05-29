@@ -408,7 +408,7 @@ spec:
       name: k8s-secret-that-contains-license
       key: key-in-a-secret-that-contains-license
   clusterVersion: v1.110.13-enterprise-cluster
-  retentionPeriod: "12"
+  retentionPeriod: "12y"
   vmstorage:
     retentionFilters:
       - filter: '{vm_account_id="5",env="dev"}'
